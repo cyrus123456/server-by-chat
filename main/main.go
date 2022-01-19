@@ -11,14 +11,14 @@ import (
 )
 
 // 临时数据库
-var usersDb = map[int64]string{
-	123: "password1",
-	456: "password2",
+var usersDb = map[string]string{
+	"123": "password1",
+	"456": "password2",
 }
 
 //登陆入参结构体
 type ClaimsStruct struct {
-	UserID   int64
+	UserID   string
 	UserName string
 	UserPwd  string
 	jwt.StandardClaims
