@@ -16,7 +16,7 @@ var usersDb = map[string]string{
 	"456": "password2",
 }
 
-type loginApiPramsStrust struct {
+type LoginApiPramsStrust struct {
 	UserID  string `json:"userID"`
 	UserPwd string `json:"userPwd"`
 }
@@ -42,9 +42,9 @@ func registerRouter(res http.ResponseWriter, req *http.Request) {
 
 func loginRouter(res http.ResponseWriter, req *http.Request) {
 	fmt.Fprint(res, "登陆--原生HTTP路由")
-
+	fmt.Println(res)
 	// 响应解码
-	var loginApiPramsStrust loginApiPramsStrust
+	var loginApiPramsStrust LoginApiPramsStrust
 	if err := json.NewDecoder(req.Body).Decode(&loginApiPramsStrust); err != nil {
 		fmt.Println("登陆接口入参对象结构解析失败")
 		res.WriteHeader(http.StatusBadRequest)
@@ -55,6 +55,7 @@ func loginRouter(res http.ResponseWriter, req *http.Request) {
 		UserID:  loginApiPramsStrust.UserID,
 		UserPwd: loginApiPramsStrust.UserPwd,
 	}
+
 	// 获取密码
 	expectedPassword, ok := usersDb[claimsStruct.UserID]
 	if !ok {
