@@ -4,6 +4,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 
@@ -37,11 +38,11 @@ func main() {
 }
 
 func registerRouter(res http.ResponseWriter, req *http.Request) {
-	fmt.Printf("注册--原生HTTP路由%v\n", req)
+	fmt.Println("注册--原生HTTP路由")
 }
 
 func loginRouter(res http.ResponseWriter, req *http.Request) {
-	fmt.Println("登陆接口入参对象json", req)
+	fmt.Println("登陆接口")
 
 	// 响应解码
 	var loginApiPramsStrust LoginApiPramsStrust
@@ -51,7 +52,7 @@ func loginRouter(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	fmt.Printf("登陆接口入参对象结构%v/n", loginApiPramsStrust)
+	fmt.Printf("登陆接口入参对象结构%v\n", loginApiPramsStrust)
 
 	claimsStruct := ClaimsStruct{
 		UserID:  loginApiPramsStrust.UserID,
@@ -70,6 +71,7 @@ func loginRouter(res http.ResponseWriter, req *http.Request) {
 		res.WriteHeader(http.StatusUnauthorized)
 		return
 	}
+	log.Fatalln("密码正确")
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claimsStruct)
 	tokenString, err := token.SigningString()
 	if err != nil {
@@ -86,9 +88,9 @@ func loginRouter(res http.ResponseWriter, req *http.Request) {
 }
 
 func chatMessageRouter(res http.ResponseWriter, req *http.Request) {
-	fmt.Printf(" 聊天消息--原生HTTP路由升级webSocket%v\n", req)
+	fmt.Println(" 聊天消息--原生HTTP路由升级webSocket")
 }
 
 func refreshRouter(res http.ResponseWriter, req *http.Request) {
-	fmt.Printf(" 刷新token%v\n", req)
+	fmt.Println(" 刷新token")
 }
