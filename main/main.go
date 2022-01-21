@@ -37,19 +37,21 @@ func main() {
 }
 
 func registerRouter(res http.ResponseWriter, req *http.Request) {
-	fmt.Fprint(res, " 注册--原生HTTP路由")
+	fmt.Printf("注册--原生HTTP路由%v\n", req)
 }
 
 func loginRouter(res http.ResponseWriter, req *http.Request) {
-	fmt.Fprint(res, "登陆--原生HTTP路由")
-	fmt.Println(res)
+	fmt.Println("登陆接口入参对象json", req)
+
 	// 响应解码
 	var loginApiPramsStrust LoginApiPramsStrust
 	if err := json.NewDecoder(req.Body).Decode(&loginApiPramsStrust); err != nil {
-		fmt.Println("登陆接口入参对象结构解析失败")
+		fmt.Println("登陆接口入参对象结构解析失败", err)
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
+
+	fmt.Printf("登陆接口入参对象结构%v/n", loginApiPramsStrust)
 
 	claimsStruct := ClaimsStruct{
 		UserID:  loginApiPramsStrust.UserID,
@@ -84,9 +86,9 @@ func loginRouter(res http.ResponseWriter, req *http.Request) {
 }
 
 func chatMessageRouter(res http.ResponseWriter, req *http.Request) {
-	fmt.Fprint(res, " 聊天消息--原生HTTP路由升级webSocket")
+	fmt.Printf(" 聊天消息--原生HTTP路由升级webSocket%v\n", req)
 }
 
 func refreshRouter(res http.ResponseWriter, req *http.Request) {
-	fmt.Fprint(res, " 刷新token")
+	fmt.Printf(" 刷新token%v\n", req)
 }
