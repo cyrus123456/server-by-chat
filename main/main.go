@@ -78,12 +78,16 @@ func loginRouter(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 	fmt.Println("token创建成功", tokenString)
-	res.Write([]byte(tokenString))
 	// http.SetCookie(res, &http.Cookie{
 	// 	Name:    "token",
 	// 	Value:   tokenString,
-	// 	Expires: time.Now().Add(5 * time.Minute) ,
+	// 	Expires: time.Now().Add(5 * time.Minute),
 	// })
+	_, err = res.Write([]byte(tokenString))
+	if err != nil {
+		fmt.Println("token返回客户端失败", err)
+		res.WriteHeader(http.StatusInternalServerError)
+	}
 }
 
 func chatMessageRouter(res http.ResponseWriter, req *http.Request) {
