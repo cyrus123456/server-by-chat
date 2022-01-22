@@ -4,17 +4,15 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
-	"time"
 
 	"github.com/dgrijalva/jwt-go"
 )
 
 // 临时数据库
 var usersDb = map[string]string{
-	"123": "password1",
-	"456": "password2",
+	"123": "qwe",
+	"456": "qwe",
 }
 
 type LoginApiPramsStrust struct {
@@ -71,7 +69,7 @@ func loginRouter(res http.ResponseWriter, req *http.Request) {
 		res.WriteHeader(http.StatusUnauthorized)
 		return
 	}
-	log.Fatalln("密码正确")
+	fmt.Println("密码正确")
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claimsStruct)
 	tokenString, err := token.SigningString()
 	if err != nil {
@@ -79,12 +77,17 @@ func loginRouter(res http.ResponseWriter, req *http.Request) {
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-
-	http.SetCookie(res, &http.Cookie{
-		Name:    "token",
-		Value:   tokenString,
-		Expires: time.Now().Add(5 * time.Minute),
-	})
+	fmt.Println("token创建成功", tokenString)
+	// http.SetCookie(res, &http.Cookie{
+	// 	Name:    "token",
+	// 	Value:   tokenString,
+	// 	Expires: time.Now().Add(5 * time.Minute),
+	// })
+	_, err = res.Write([]byte(tokenString))
+	if err != nil {
+		fmt.Println("token返回客户端失败", err)
+		res.WriteHeader(http.StatusInternalServerError)
+	}
 }
 
 func chatMessageRouter(res http.ResponseWriter, req *http.Request) {
