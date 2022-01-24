@@ -35,6 +35,7 @@ func main() {
 	http.HandleFunc("/login", loginRouter)
 	http.HandleFunc("/refresh", refreshRouter)
 	http.HandleFunc("/chatMessage", chatMessageRouter)
+	http.HandleFunc("/tokenVerify", tokenVerifyRouter)
 	http.ListenAndServe(":8080", nil)
 }
 
@@ -97,10 +98,27 @@ func loginRouter(res http.ResponseWriter, req *http.Request) {
 	})
 }
 
+func refreshRouter(res http.ResponseWriter, req *http.Request) {
+	fmt.Println(" 刷新token")
+}
+
 func chatMessageRouter(res http.ResponseWriter, req *http.Request) {
 	fmt.Println(" 聊天消息--原生HTTP路由升级webSocket")
 }
 
-func refreshRouter(res http.ResponseWriter, req *http.Request) {
-	fmt.Println(" 刷新token")
+func tokenVerifyRouter(res http.ResponseWriter, req *http.Request) {
+	fmt.Println(" token验证")
+	httpCookie, err := req.Cookie("reactToken")
+	if err != nil {
+		if err == http.ErrNoCookie {
+			// 如果未设置cookie，则返回未授权状态
+			fmt.Println("未设置Cookie")
+			res.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		// 对于其他类型的错误，返回错误的请求状态。
+		res.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	fmt.Println("成功获取token", httpCookie.Value)
 }
