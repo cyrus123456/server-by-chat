@@ -121,4 +121,24 @@ func tokenVerifyRouter(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 	fmt.Println("成功获取token", httpCookie.Value)
+	jwtTokenResponseClaimsStruct := &JwtTokenResponseClaimsStruct{}
+	okToken, err := jwt.ParseWithClaims(httpCookie.Value, jwtTokenResponseClaimsStruct, func(token *jwt.Token) (interface{}, error) {
+		return jwtKey, nil
+	})
+	fmt.Println("验证token", okToken)
+	if err != nil {
+		if err == jwt.ErrSignatureInvalid {
+			res.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		res.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	if !okToken.Valid {
+		res.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	// 最后，将欢迎消息以及令牌中的用户名返回给用户
+	res.Write([]byte(fmt.Sprintf("Welcome %s!", jwtTokenResponseClaimsStruct.UserID)))
 }
