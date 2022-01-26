@@ -100,6 +100,63 @@ func loginRouter(res http.ResponseWriter, req *http.Request) {
 
 func refreshRouter(res http.ResponseWriter, req *http.Request) {
 	fmt.Println(" 刷新token")
+	httpCookie, err := req.Cookie("reactToken")
+	if err != nil {
+		if err == http.ErrNoCookie {
+			fmt.Println("未设置cookie")
+			res.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		fmt.Println("请求错误")
+		res.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	fmt.Println("成功获取cookie", httpCookie.Value)
+	jwtTokenResponseClaimsStruct := &JwtTokenResponseClaimsStruct{}
+	okToken, err := jwt.ParseWithClaims(httpCookie.Value, jwtTokenResponseClaimsStruct, func(token *jwt.Token) (interface{}, error) {
+		return jwtKey, nil
+	})
+	fmt.Println("验证token", okToken)
+	if err != nil {
+		if err == jwt.ErrSignatureInvalid {
+			res.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		res.WriteHeader(http.StatusBadGateway)
+		return
+	}
+	if !okToken.Valid {
+		res.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	if time.Unix(jwtTokenResponseClaimsStruct.ExpiresAt, 0).Sub(time.Now()) > 30*time.Second {
+		res.WriteHeader(http.StatusBadRequest)
+		fmt.Println("jwtToken到期还有很长时间")
+		return
+	}
+	fmt.Println("开始颁发新的jwttoken")
+	expirationTime := time.Now().Add(5 * time.Minute)
+	fmt.Println("逾期时间对象", expirationTime)
+	jwtTokenResponseClaimsStruct.StandardClaims.ExpiresAt = expirationTime.Unix()
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwtTokenResponseClaimsStruct)
+	tokenString, err := token.SignedString(jwtKey)
+	if err != nil {
+		fmt.Println("token创建出错", err)
+		res.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	fmt.Println("token创建成功", tokenString)
+	http.SetCookie(res, &http.Cookie{
+		Name:  "reactToken",
+		Value: tokenString,
+
+		Path:    "/",
+		Expires: expirationTime,
+
+		Secure:   true,
+		HttpOnly: true,
+	})
 }
 
 func chatMessageRouter(res http.ResponseWriter, req *http.Request) {
