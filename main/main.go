@@ -4,11 +4,15 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/gorilla/websocket"
 )
+
+var upgrader = websocket.Upgrader{}
 
 // 创建一个jwt使用的密钥
 var jwtKey = []byte("my_react_token_key")
@@ -31,12 +35,35 @@ type JwtTokenResponseClaimsStruct struct {
 }
 
 func main() {
+	http.HandleFunc("/socket", socketHandler)
 	http.HandleFunc("/register", registerRouter)
 	http.HandleFunc("/login", loginRouter)
 	http.HandleFunc("/refresh", refreshRouter)
 	http.HandleFunc("/chatMessage", chatMessageRouter)
 	http.HandleFunc("/tokenVerify", tokenVerifyRouter)
 	http.ListenAndServe(":8080", nil)
+}
+
+func socketHandler(res http.ResponseWriter, req *http.Request) {
+	conn, err := upgrader.Upgrade(res, req, nil)
+	if err != nil {
+		log.Print("Error during connection upgradation:", err)
+		return
+	}
+	defer conn.Close()
+	for {
+		messageType, message, err := conn.ReadMessage()
+		if err != nil {
+			log.Println("Error during message reading:", err)
+			break
+		}
+		log.Printf("Received: %s", message)
+		err = conn.WriteMessage(messageType, message)
+		if err != nil {
+			log.Println("Error during message writing:", err)
+			break
+		}
+	}
 }
 
 func registerRouter(res http.ResponseWriter, req *http.Request) {
