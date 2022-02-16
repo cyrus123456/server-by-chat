@@ -12,7 +12,15 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-var upgrader = websocket.Upgrader{}
+var upgrader = websocket.Upgrader{
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
+
+	// 可以用来检查连接的来源
+	// 这将允许从我们的 React 服务向这里发出请求。
+	// 现在，我们可以不需要检查并运行任何连接
+	CheckOrigin: func(r *http.Request) bool { return true },
+}
 
 // 创建一个jwt使用的密钥
 var jwtKey = []byte("my_react_token_key")
@@ -41,7 +49,7 @@ func main() {
 	http.HandleFunc("/refresh", refreshRouter)
 	http.HandleFunc("/chatMessage", chatMessageRouter)
 	http.HandleFunc("/tokenVerify", tokenVerifyRouter)
-	http.ListenAndServe(":8080", nil)
+	http.ListenAndServe(":9876", nil)
 }
 
 func socketHandler(res http.ResponseWriter, req *http.Request) {
@@ -57,6 +65,7 @@ func socketHandler(res http.ResponseWriter, req *http.Request) {
 			log.Println("Error during message reading:", err)
 			break
 		}
+		fmt.Println(string(message))
 		log.Printf("Received: %s", message)
 		err = conn.WriteMessage(messageType, message)
 		if err != nil {
