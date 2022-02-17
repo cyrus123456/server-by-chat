@@ -1,0 +1,4 @@
+package practiceInterview
+
+func PritNumbersAndLettersAlternately() {
+}

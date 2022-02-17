@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"server-by-chat/practiceInterview"
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
@@ -43,6 +44,9 @@ type JwtTokenResponseClaimsStruct struct {
 }
 
 func main() {
+	// 练习
+	practiceInterview.PrintNumbersAndLettersAlternately()
+
 	http.HandleFunc("/socket", socketHandler)
 	http.HandleFunc("/register", registerRouter)
 	http.HandleFunc("/login", loginRouter)
