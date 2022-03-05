@@ -30,6 +30,7 @@ var jwtKey = []byte("my_react_token_key")
 var usersDb = map[string]string{
 	"123": "qwe",
 	"456": "qwe",
+	"789": "qwe",
 }
 
 type LoginRequestStrust struct {
