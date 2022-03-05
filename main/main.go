@@ -47,7 +47,7 @@ func main() {
 	// 练习
 	practiceinterview.Test()
 
-	fmt.Println("端口9876")
+	fmt.Println("端口9876\n\r")
 	http.HandleFunc("/socket", socketHandler)
 	http.HandleFunc("/register", registerRouter)
 	http.HandleFunc("/login", loginRouter)
@@ -60,21 +60,21 @@ func main() {
 func socketHandler(res http.ResponseWriter, req *http.Request) {
 	conn, err := upgrader.Upgrade(res, req, nil)
 	if err != nil {
-		log.Print("Error during connection upgradation:", err)
+		log.Print("Error during connection upgradation:\n\r", err)
 		return
 	}
 	defer conn.Close()
 	for {
 		messageType, message, err := conn.ReadMessage()
 		if err != nil {
-			log.Println("Error during message reading:", err)
+			log.Println("Error during message reading:\n\r", err)
 			break
 		}
-		fmt.Println(string(message))
-		log.Printf("Received: %s", message)
+		fmt.Println(string(message), "\n\r")
+		log.Printf("Received: %s\n\r", message)
 		err = conn.WriteMessage(messageType, message)
 		if err != nil {
-			log.Println("Error during message writing:", err)
+			log.Println("Error during message writing:\n\r", err)
 			break
 		}
 	}
@@ -85,12 +85,12 @@ func registerRouter(res http.ResponseWriter, req *http.Request) {
 }
 
 func loginRouter(res http.ResponseWriter, req *http.Request) {
-	fmt.Println("登陆接口")
+	fmt.Println("登陆接口\n\r")
 
 	// 响应解码
 	var loginRequestStrust LoginRequestStrust
 	if err := json.NewDecoder(req.Body).Decode(&loginRequestStrust); err != nil {
-		fmt.Println("登陆接口入参对象结构解析失败", err)
+		fmt.Println("登陆接口入参对象结构解析失败\n\r", err)
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -100,16 +100,16 @@ func loginRouter(res http.ResponseWriter, req *http.Request) {
 	// 获取密码
 	expectedPassword, ok := usersDb[loginRequestStrust.UserID]
 	if !ok {
-		fmt.Println("没有此用户")
+		fmt.Println("没有此用户\n\r")
 		res.WriteHeader(http.StatusUnauthorized)
 		return
 	}
 	if loginRequestStrust.UserPwd != expectedPassword {
-		fmt.Println("密码不正确")
+		fmt.Println("密码不正确\n\r")
 		res.WriteHeader(http.StatusUnauthorized)
 		return
 	}
-	fmt.Println("密码正确")
+	fmt.Println("密码正确\n\r")
 
 	expirationTime := time.Now().Add(5 * time.Minute)
 	jwtTokenResponseClaimsStruct := &JwtTokenResponseClaimsStruct{
@@ -122,11 +122,11 @@ func loginRouter(res http.ResponseWriter, req *http.Request) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwtTokenResponseClaimsStruct)
 	tokenString, err := token.SignedString(jwtKey)
 	if err != nil {
-		fmt.Println("token创建出错", err)
+		fmt.Println("token创建出错\n\r", err)
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	fmt.Println("token创建成功", tokenString)
+	fmt.Println("token创建成功\n\r", tokenString)
 	http.SetCookie(res, &http.Cookie{
 		Name:  "reactToken",
 		Value: tokenString,
@@ -140,24 +140,24 @@ func loginRouter(res http.ResponseWriter, req *http.Request) {
 }
 
 func refreshRouter(res http.ResponseWriter, req *http.Request) {
-	fmt.Println(" 刷新token")
+	fmt.Println(" 刷新token\n\r")
 	httpCookie, err := req.Cookie("reactToken")
 	if err != nil {
 		if err == http.ErrNoCookie {
-			fmt.Println("未设置cookie")
+			fmt.Println("未设置cookie\n\r")
 			res.WriteHeader(http.StatusUnauthorized)
 			return
 		}
-		fmt.Println("请求错误")
+		fmt.Println("请求错误\n\r")
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	fmt.Println("成功获取cookie", httpCookie.Value)
+	fmt.Println("成功获取cookie\n\r", httpCookie.Value)
 	jwtTokenResponseClaimsStruct := &JwtTokenResponseClaimsStruct{}
 	okToken, err := jwt.ParseWithClaims(httpCookie.Value, jwtTokenResponseClaimsStruct, func(token *jwt.Token) (interface{}, error) {
 		return jwtKey, nil
 	})
-	fmt.Println("验证token", okToken)
+	fmt.Println("验证token\n\r", okToken)
 	if err != nil {
 		if err == jwt.ErrSignatureInvalid {
 			res.WriteHeader(http.StatusUnauthorized)
@@ -173,21 +173,21 @@ func refreshRouter(res http.ResponseWriter, req *http.Request) {
 
 	if time.Unix(jwtTokenResponseClaimsStruct.ExpiresAt, 0).Sub(time.Now()) > 30*time.Second {
 		res.WriteHeader(http.StatusBadRequest)
-		fmt.Println("jwtToken到期还有很长时间")
+		fmt.Println("jwtToken到期还有很长时间\n\r")
 		return
 	}
-	fmt.Println("开始颁发新的jwttoken")
+	fmt.Println("开始颁发新的jwttoken\n\r")
 	expirationTime := time.Now().Add(5 * time.Minute)
-	fmt.Println("逾期时间对象", expirationTime)
+	fmt.Println("逾期时间对象\n\r", expirationTime)
 	jwtTokenResponseClaimsStruct.StandardClaims.ExpiresAt = expirationTime.Unix()
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwtTokenResponseClaimsStruct)
 	tokenString, err := token.SignedString(jwtKey)
 	if err != nil {
-		fmt.Println("token创建出错", err)
+		fmt.Println("token创建出错\n\r", err)
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	fmt.Println("token创建成功", tokenString)
+	fmt.Println("token创建成功\n\r", tokenString)
 	http.SetCookie(res, &http.Cookie{
 		Name:  "reactToken",
 		Value: tokenString,
@@ -201,16 +201,16 @@ func refreshRouter(res http.ResponseWriter, req *http.Request) {
 }
 
 func chatMessageRouter(res http.ResponseWriter, req *http.Request) {
-	fmt.Println(" 聊天消息--原生HTTP路由升级webSocket")
+	fmt.Println(" 聊天消息--原生HTTP路由升级webSocket\n\r")
 }
 
 func tokenVerifyRouter(res http.ResponseWriter, req *http.Request) {
-	fmt.Println(" token验证")
+	fmt.Println(" token验证\n\r")
 	httpCookie, err := req.Cookie("reactToken")
 	if err != nil {
 		if err == http.ErrNoCookie {
 			// 如果未设置cookie，则返回未授权状态
-			fmt.Println("未设置Cookie")
+			fmt.Println("未设置Cookie\n\r")
 			res.WriteHeader(http.StatusUnauthorized)
 			return
 		}
@@ -218,12 +218,12 @@ func tokenVerifyRouter(res http.ResponseWriter, req *http.Request) {
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	fmt.Println("成功获取token", httpCookie.Value)
+	fmt.Println("成功获取token\n\r", httpCookie.Value)
 	jwtTokenResponseClaimsStruct := &JwtTokenResponseClaimsStruct{}
 	okToken, err := jwt.ParseWithClaims(httpCookie.Value, jwtTokenResponseClaimsStruct, func(token *jwt.Token) (interface{}, error) {
 		return jwtKey, nil
 	})
-	fmt.Println("验证token", okToken)
+	fmt.Println("验证token\n\r", okToken)
 	if err != nil {
 		if err == jwt.ErrSignatureInvalid {
 			res.WriteHeader(http.StatusUnauthorized)
@@ -238,5 +238,5 @@ func tokenVerifyRouter(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// 最后，将欢迎消息以及令牌中的用户名返回给用户
-	res.Write([]byte(fmt.Sprintf("Welcome %s!", jwtTokenResponseClaimsStruct.UserID)))
+	res.Write([]byte(fmt.Sprintf("Welcome %s!\n\r", jwtTokenResponseClaimsStruct.UserID)))
 }
