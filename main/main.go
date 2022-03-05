@@ -47,6 +47,7 @@ func main() {
 	// 练习
 	practiceinterview.Test()
 
+	fmt.Println("端口9876")
 	http.HandleFunc("/socket", socketHandler)
 	http.HandleFunc("/register", registerRouter)
 	http.HandleFunc("/login", loginRouter)
