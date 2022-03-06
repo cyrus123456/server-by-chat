@@ -44,6 +44,15 @@ type JwtTokenResponseClaimsStruct struct {
 	jwt.StandardClaims
 }
 
+type MessageContentStruct struct {
+	UserId             string
+	ChatRoomId         string
+	MessageRecipientId []string
+	MessageContent     string
+}
+
+var Coons = make(map[string]*websocket.Conn)
+
 func main() {
 	// 练习
 	practiceinterview.Test()
@@ -71,12 +80,22 @@ func socketHandler(res http.ResponseWriter, req *http.Request) {
 			log.Println("Error during message reading:\n\r", err)
 			break
 		}
-		fmt.Println(string(message), "\n\r")
-		log.Printf("Received: %s\n\r", message)
-		err = conn.WriteMessage(messageType, message)
+		var messageContentStruct MessageContentStruct
+		err = json.Unmarshal(message, &messageContentStruct)
 		if err != nil {
-			log.Println("Error during message writing:\n\r", err)
-			break
+			fmt.Println("聊天消息反序列化失败\n\r")
+		}
+		fmt.Println("服务端收到的砝反序列化消息", messageContentStruct, "\n\r")
+		Coons[messageContentStruct.UserId] = conn
+		for _, v := range messageContentStruct.MessageRecipientId {
+			err = Coons[v].WriteMessage(
+				messageType,
+				[]byte(messageContentStruct.UserId+"发给"+v+"消息了"),
+			)
+			if err != nil {
+				log.Println("Error during message writing:\n\r", err)
+				// break
+			}
 		}
 	}
 }
