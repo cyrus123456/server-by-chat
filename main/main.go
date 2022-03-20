@@ -26,11 +26,76 @@ var upgrader = websocket.Upgrader{
 // 创建一个jwt使用的密钥
 var jwtKey = []byte("my_react_token_key")
 
-// 临时数据库
-var usersDb = map[string]string{
+// 临时数据库------------------------------------------------------------------------------
+var usersDb = map[string]string{ //用户密码数据库
 	"123": "qwe",
 	"456": "qwe",
 	"789": "qwe",
+}
+
+type usersChatroomStruct struct {
+	Title  string
+	Sender bool
+}
+
+var usersChatroomDb = map[string][]usersChatroomStruct{ //用户聊天室列表数据库
+	"123": []usersChatroomStruct{
+		usersChatroomStruct{
+			Title:  "123_456_789",
+			Sender: true,
+		},
+		usersChatroomStruct{
+			Title:  "123_456",
+			Sender: false,
+		},
+	},
+	"456": []usersChatroomStruct{
+		usersChatroomStruct{
+			Title:  "123_456_789",
+			Sender: true,
+		},
+		usersChatroomStruct{
+			Title:  "123_456",
+			Sender: false,
+		},
+	},
+	"789": []usersChatroomStruct{
+		usersChatroomStruct{
+			Title:  "123_456_789",
+			Sender: true,
+		},
+	},
+}
+
+type chatMessageContent struct {
+	TimeStamp          string
+	MessageTextContent string
+}
+
+var timeNowFormat = time.Now().Format("2006-01-02 15:04:05") //当前时间
+var chatroomDb = map[string][]map[string]chatMessageContent{ //聊天室列表数据库
+	"123_456_789": []map[string]chatMessageContent{
+		map[string]chatMessageContent{
+			"123": chatMessageContent{
+				TimeStamp:          timeNowFormat,
+				MessageTextContent: "大家好",
+			},
+		},
+	},
+	"123_456": []map[string]chatMessageContent{
+		map[string]chatMessageContent{
+			"123": chatMessageContent{
+				TimeStamp:          timeNowFormat,
+				MessageTextContent: "你好",
+			},
+		},
+		map[string]chatMessageContent{
+			"456": chatMessageContent{
+				TimeStamp:          timeNowFormat,
+				MessageTextContent: "enen,你好",
+			},
+		},
+	},
 }
 
 type LoginRequestStrust struct {
@@ -58,7 +123,10 @@ func main() {
 	practiceinterview.Test()
 
 	fmt.Println("端口9876\n\r")
+
 	http.HandleFunc("/socket", socketHandler)
+
+	http.HandleFunc("/refreshChatList", refreshChatListRouter)
 	http.HandleFunc("/register", registerRouter)
 	http.HandleFunc("/login", loginRouter)
 	http.HandleFunc("/refresh", refreshRouter)
@@ -90,7 +158,7 @@ func socketHandler(res http.ResponseWriter, req *http.Request) {
 		for _, v := range messageContentStruct.MessageRecipientId {
 			err = Coons[v].WriteMessage(
 				messageType,
-				[]byte(messageContentStruct.UserId+"发给"+v+"消息了"),
+				[]byte(messageContentStruct.UserId+"发给"+v+"消息了：\n\r"+messageContentStruct.MessageContent),
 			)
 			if err != nil {
 				log.Println("Error during message writing:\n\r", err)
@@ -98,6 +166,23 @@ func socketHandler(res http.ResponseWriter, req *http.Request) {
 			}
 		}
 	}
+}
+
+func refreshChatListRouter(res http.ResponseWriter, _ *http.Request) {
+	type ResStruct struct {
+		UsersChatroomDb map[string][]usersChatroomStruct
+		ChatroomDb      map[string][]map[string]chatMessageContent
+	}
+	resStruct := ResStruct{
+		UsersChatroomDb: usersChatroomDb,
+		ChatroomDb:      chatroomDb,
+	}
+	resByyte, err := json.Marshal(resStruct)
+	if err != nil {
+		res.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	res.Write(resByyte)
 }
 
 func registerRouter(res http.ResponseWriter, req *http.Request) {
