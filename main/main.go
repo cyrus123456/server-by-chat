@@ -239,8 +239,8 @@ func loginRouter(res http.ResponseWriter, req *http.Request) {
 		Path:    "/",
 		Expires: expirationTime,
 
-		Secure:   true,
-		HttpOnly: true,
+		Secure:   false,
+		HttpOnly: false,
 	})
 }
 
