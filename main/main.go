@@ -179,14 +179,14 @@ func refreshChatListRouter(res http.ResponseWriter, req *http.Request) {
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	fmt.Println("初始化聊天信息接口入参对象\r\n", uidStruct)
+	fmt.Println("初始化聊天信息接口入参对象\r\n", uidStruct.Uid)
 
 	type ResStruct struct {
-		UsersChatroomDb map[string][]usersChatroomStruct
+		UsersChatroomDb []usersChatroomStruct
 		ChatroomDb      map[string][]map[string]chatMessageContent
 	}
 	resStruct := ResStruct{
-		UsersChatroomDb: usersChatroomDb,
+		UsersChatroomDb: usersChatroomDb[uidStruct.Uid],
 		ChatroomDb:      chatroomDb,
 	}
 	resByyte, err := json.Marshal(resStruct)
