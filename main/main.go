@@ -168,7 +168,19 @@ func socketHandler(res http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func refreshChatListRouter(res http.ResponseWriter, _ *http.Request) {
+func refreshChatListRouter(res http.ResponseWriter, req *http.Request) {
+
+	type UidStruct struct {
+		Uid string `json:"uid"`
+	}
+	uidStruct := UidStruct{}
+	if err := json.NewDecoder(req.Body).Decode(&uidStruct); err != nil {
+		fmt.Println("初始化聊天信息接口入参对象结构解析失败\n\r", err)
+		res.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	fmt.Println("初始化聊天信息接口入参对象\r\n", uidStruct)
+
 	type ResStruct struct {
 		UsersChatroomDb map[string][]usersChatroomStruct
 		ChatroomDb      map[string][]map[string]chatMessageContent
