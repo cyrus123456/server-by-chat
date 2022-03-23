@@ -34,8 +34,8 @@ var usersDb = map[string]string{ //用户密码数据库
 }
 
 type usersChatroomStruct struct {
-	Title  string
-	Sender bool
+	Title  string `json:"title"`
+	Sender bool   `json:"sender"`
 }
 
 var usersChatroomDb = map[string][]usersChatroomStruct{ //用户聊天室列表数据库
