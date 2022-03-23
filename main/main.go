@@ -68,32 +68,30 @@ var usersChatroomDb = map[string][]usersChatroomStruct{ //用户聊天室列表�
 }
 
 type chatMessageContent struct {
-	TimeStamp          string
-	MessageTextContent string
+	Sender             string `json:"sender"`
+	TimeStamp          string `json:"timeStamp"`
+	MessageTextContent string `json:"messageTextContent"`
 }
 
 var timeNowFormat = time.Now().Format("2006-01-02 15:04:05") //当前时间
-var chatroomDb = map[string][]map[string]chatMessageContent{ //聊天室列表数据库
-	"123_456_789": []map[string]chatMessageContent{
-		map[string]chatMessageContent{
-			"123": chatMessageContent{
-				TimeStamp:          timeNowFormat,
-				MessageTextContent: "大家好",
-			},
+var chatroomDb = map[string][]chatMessageContent{            //聊天室列表数据库
+	"123_456_789": []chatMessageContent{
+		chatMessageContent{
+			Sender:             "123",
+			TimeStamp:          timeNowFormat,
+			MessageTextContent: "大家好",
 		},
 	},
-	"123_456": []map[string]chatMessageContent{
-		map[string]chatMessageContent{
-			"123": chatMessageContent{
-				TimeStamp:          timeNowFormat,
-				MessageTextContent: "你好",
-			},
+	"123_456": []chatMessageContent{
+		chatMessageContent{
+			Sender:             "123",
+			TimeStamp:          timeNowFormat,
+			MessageTextContent: "你好",
 		},
-		map[string]chatMessageContent{
-			"456": chatMessageContent{
-				TimeStamp:          timeNowFormat,
-				MessageTextContent: "enen,你好",
-			},
+		chatMessageContent{
+			Sender:             "456",
+			TimeStamp:          timeNowFormat,
+			MessageTextContent: "enen,你好",
 		},
 	},
 }
@@ -183,7 +181,7 @@ func refreshChatListRouter(res http.ResponseWriter, req *http.Request) {
 
 	type ResStruct struct {
 		UsersChatroomDb []usersChatroomStruct
-		ChatroomDb      map[string][]map[string]chatMessageContent
+		ChatroomDb      map[string][]chatMessageContent
 	}
 	resStruct := ResStruct{
 		UsersChatroomDb: usersChatroomDb[uidStruct.Uid],
