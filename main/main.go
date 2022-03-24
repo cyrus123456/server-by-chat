@@ -67,30 +67,38 @@ var usersChatroomDb = map[string][]usersChatroomStruct{ //用户聊天室列表�
 	},
 }
 
-type chatMessageContent struct {
-	Sender             string `json:"sender"`
-	TimeStamp          string `json:"timeStamp"`
-	MessageTextContent string `json:"messageTextContent"`
+type ChatMessageContent struct {
+	TimeStamp          string   `json:"timeStamp"`
+	Sender             string   `json:"sender"`
+	MessageRecipientId []string `json:"messageRecipientId"`
+	ChatRoomId         string   `json:"chatRoomId"`
+	MessageTextContent string   `json:"messageTextContent"`
 }
 
 var timeNowFormat = time.Now().Format("2006-01-02 15:04:05") //当前时间
-var chatroomDb = map[string][]chatMessageContent{            //聊天室列表数据库
-	"123_456_789": []chatMessageContent{
-		chatMessageContent{
-			Sender:             "123",
+var chatroomDb = map[string][]ChatMessageContent{            //聊天室列表数据库
+	"123_456_789": []ChatMessageContent{
+		ChatMessageContent{
 			TimeStamp:          timeNowFormat,
+			Sender:             "123",
+			MessageRecipientId: make([]string, 0),
+			ChatRoomId:         "123_456_789",
 			MessageTextContent: "大家好",
 		},
 	},
-	"123_456": []chatMessageContent{
-		chatMessageContent{
-			Sender:             "123",
+	"123_456": []ChatMessageContent{
+		ChatMessageContent{
 			TimeStamp:          timeNowFormat,
+			Sender:             "123",
+			MessageRecipientId: make([]string, 0),
+			ChatRoomId:         "123_456",
 			MessageTextContent: "你好",
 		},
-		chatMessageContent{
-			Sender:             "456",
+		ChatMessageContent{
 			TimeStamp:          timeNowFormat,
+			Sender:             "456",
+			MessageRecipientId: make([]string, 0),
+			ChatRoomId:         "123_456",
 			MessageTextContent: "enen,你好",
 		},
 	},
@@ -105,13 +113,6 @@ type LoginRequestStrust struct {
 type JwtTokenResponseClaimsStruct struct {
 	UserID string
 	jwt.StandardClaims
-}
-
-type MessageContentStruct struct {
-	UserId             string
-	ChatRoomId         string
-	MessageRecipientId []string
-	MessageContent     string
 }
 
 var Coons = make(map[string]*websocket.Conn)
@@ -146,17 +147,17 @@ func socketHandler(res http.ResponseWriter, req *http.Request) {
 			log.Println("Error during message reading:\n\r", err)
 			break
 		}
-		var messageContentStruct MessageContentStruct
-		err = json.Unmarshal(message, &messageContentStruct)
+		var chatMessageContent ChatMessageContent
+		err = json.Unmarshal(message, &chatMessageContent)
 		if err != nil {
 			fmt.Println("聊天消息反序列化失败\n\r")
 		}
-		fmt.Println("服务端收到的砝反序列化消息", messageContentStruct, "\n\r")
-		Coons[messageContentStruct.UserId] = conn
-		for _, v := range messageContentStruct.MessageRecipientId {
+		fmt.Println("服务端收到的砝反序列化消息", chatMessageContent, "\n\r")
+		Coons[chatMessageContent.Sender] = conn
+		for _, v := range chatMessageContent.MessageRecipientId {
 			err = Coons[v].WriteMessage(
 				messageType,
-				[]byte(messageContentStruct.UserId+"发给"+v+"消息了：\n\r"+messageContentStruct.MessageContent),
+				[]byte(chatMessageContent.Sender+"发给"+v+"消息了：\n\r"+chatMessageContent.MessageTextContent),
 			)
 			if err != nil {
 				log.Println("Error during message writing:\n\r", err)
@@ -181,7 +182,7 @@ func refreshChatListRouter(res http.ResponseWriter, req *http.Request) {
 
 	type ResStruct struct {
 		UsersChatroomDb []usersChatroomStruct
-		ChatroomDb      map[string][]chatMessageContent
+		ChatroomDb      map[string][]ChatMessageContent
 	}
 	resStruct := ResStruct{
 		UsersChatroomDb: usersChatroomDb[uidStruct.Uid],
