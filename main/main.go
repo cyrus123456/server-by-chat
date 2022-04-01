@@ -34,8 +34,8 @@ var usersDb = map[string]string{ //用户密码数据库
 }
 
 type usersChatroomStruct struct {
-	Title  string `json:"title"`
-	Sender bool   `json:"sender"`
+	Title  string `json:"title,omitempty"`
+	Sender bool   `json:"sender,omitempty"`
 }
 
 var usersChatroomDb = map[string][]usersChatroomStruct{ //用户聊天室列表数据库
@@ -68,11 +68,11 @@ var usersChatroomDb = map[string][]usersChatroomStruct{ //用户聊天室列表�
 }
 
 type ChatMessageContent struct {
-	TimeStamp          string   `json:"timeStamp"`
-	Sender             string   `json:"sender"`
-	MessageRecipientId []string `json:"messageRecipientId"`
-	ChatRoomId         string   `json:"chatRoomId"`
-	MessageTextContent string   `json:"messageTextContent"`
+	TimeStamp          string   `json:"timeStamp,omitempty"`
+	Sender             string   `json:"sender,omitempty"`
+	MessageRecipientId []string `json:"messageRecipientId,omitempty"`
+	ChatRoomId         string   `json:"chatRoomId,omitempty"`
+	MessageTextContent string   `json:"messageTextContent,omitempty"`
 }
 
 var timeNowFormat = time.Now().Format("2006-01-02 15:04:05") //当前时间
@@ -105,8 +105,8 @@ var chatroomDb = map[string][]ChatMessageContent{            //聊天室列表�
 }
 
 type LoginRequestStrust struct {
-	UserID  string `json:"userID"`
-	UserPwd string `json:"userPwd"`
+	UserID  string `json:"userID,omitempty"`
+	UserPwd string `json:"userPwd,omitempty"`
 }
 
 //token转化结构体
@@ -170,7 +170,7 @@ func socketHandler(res http.ResponseWriter, req *http.Request) {
 func refreshChatListRouter(res http.ResponseWriter, req *http.Request) {
 
 	type UidStruct struct {
-		Uid string `json:"uid"`
+		Uid string `json:"uid,omitempty"`
 	}
 	uidStruct := UidStruct{}
 	if err := json.NewDecoder(req.Body).Decode(&uidStruct); err != nil {
