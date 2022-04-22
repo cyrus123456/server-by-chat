@@ -1,3 +1,9 @@
 package practiceinterview
 
-func Test() {}
+import (
+	"fmt"
+)
+
+func Test() {
+	fmt.Println("测试")
+}

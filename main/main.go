@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	practiceinterview "server-by-chat/practiceInterview"
+	practiceInterview "server-by-chat/practiceInterview"
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
@@ -119,7 +119,7 @@ var Coons = make(map[string]*websocket.Conn)
 
 func main() {
 	// 练习
-	practiceinterview.Test()
+	practiceInterview.Test()
 
 	fmt.Println("端口9876\n\r")
 
