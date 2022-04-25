@@ -1,18 +1,17 @@
 package practiceinterview
 
-import (
-	"fmt"
-	"time"
-)
-
 func Test() {
-	start_1 := time.Now() // 获取当前时间
-	segmentation(tempSlice)
-	fmt.Println("未优化/n", time.Since(start_1))
 
-	start_2 := time.Now() // 获取当前时间
-	pointerSplitMergeSort(tempSlice, 0, len(tempSlice))
-	fmt.Println("优化后/n", time.Since(start_2))
+	// 堆排序
+
+	// 归并排序
+	// start_1 := time.Now() // 获取当前时间
+	// segmentation(tempSlice)
+	// fmt.Println("未优化/n", time.Since(start_1))
+
+	// start_2 := time.Now() // 获取当前时间
+	// pointerSplitMergeSort(tempSlice, 0, len(tempSlice))
+	// fmt.Println("优化后/n", time.Since(start_2))
 }
 
 // 优化方法1---------------------------------------------------------------------
