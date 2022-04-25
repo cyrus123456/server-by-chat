@@ -3,7 +3,7 @@ package practiceinterview
 func Test() {
 
 	// 堆排序
-
+	heapSort(tempSlice)
 	// 归并排序
 	// start_1 := time.Now() // 获取当前时间
 	// segmentation(tempSlice)
@@ -12,6 +12,14 @@ func Test() {
 	// start_2 := time.Now() // 获取当前时间
 	// pointerSplitMergeSort(tempSlice, 0, len(tempSlice))
 	// fmt.Println("优化后/n", time.Since(start_2))
+}
+
+func heapSort(slice_arg []int) {
+
+}
+
+func adjustHeap(slice_arg []int, index_arg, sliceLength_arg int) {
+
 }
 
 // 优化方法1---------------------------------------------------------------------
