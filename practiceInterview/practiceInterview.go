@@ -1,24 +1,74 @@
 package practiceinterview
 
+import (
+	"fmt"
+	"time"
+)
+
 func Test() {
 
 	// 堆排序
+	start := time.Now() // 获取当前时间
 	heapSort(tempSlice)
+	fmt.Println("\r\n", time.Since(start))
+
 	// 归并排序
 	// start_1 := time.Now() // 获取当前时间
 	// segmentation(tempSlice)
 	// fmt.Println("未优化/n", time.Since(start_1))
 
-	// start_2 := time.Now() // 获取当前时间
-	// pointerSplitMergeSort(tempSlice, 0, len(tempSlice))
-	// fmt.Println("优化后/n", time.Since(start_2))
+	start_2 := time.Now() // 获取当前时间
+	pointerSplitMergeSort(tempSlice1, 0, len(tempSlice1))
+	fmt.Println("优化后/n", time.Since(start_2))
 }
 
+/**
+ * @name:
+ * @msg:
+ * @param {[]int} slice_arg  数组切片
+ * @return {*}
+ */
 func heapSort(slice_arg []int) {
 
+	for nonLeafNode := len(slice_arg)/2 - 1; nonLeafNode >= 0; nonLeafNode-- {
+		adjustHeap(slice_arg, nonLeafNode, len(slice_arg))
+	}
+
+	for endIndex := len(slice_arg) - 1; endIndex > 0; endIndex-- {
+		slice_arg[endIndex], slice_arg[0] = slice_arg[0], slice_arg[endIndex]
+		adjustHeap(slice_arg, 0, endIndex)
+	}
+
 }
 
+/**
+ * @name:
+ * @msg:												三角堆节点顺序调整
+ * @param {[]int} slice_arg 		数组切片
+ * @param {*} index_arg 				三角树顶
+ * @param {int} sliceLength_arg 数组切片长度
+ * @return {*}
+ */
 func adjustHeap(slice_arg []int, index_arg, sliceLength_arg int) {
+
+	temp := slice_arg[index_arg]
+
+	for childIndex := 2*index_arg + 1; childIndex < sliceLength_arg; childIndex = 2*childIndex + 1 {
+
+		if childIndex+1 < sliceLength_arg && slice_arg[childIndex] < slice_arg[childIndex+1] {
+			childIndex++ //指向右子节点
+		}
+
+		if slice_arg[childIndex] > slice_arg[index_arg] {
+			slice_arg[index_arg] = slice_arg[childIndex] //子节点大于父节点、交换位置
+			index_arg = childIndex
+		} else {
+			break
+		}
+
+		slice_arg[index_arg] = temp
+
+	}
 
 }
 
