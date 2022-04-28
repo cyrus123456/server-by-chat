@@ -7,10 +7,15 @@ import (
 
 func Test() {
 
-	// 堆排序
+	// 希尔排序
 	start := time.Now() // 获取当前时间
-	heapSort(tempSlice)
-	fmt.Println("\r\n", time.Since(start))
+	shellSort(tempSlice)
+	fmt.Println(tempSlice, "希尔排序\r\n", time.Since(start))
+
+	// 堆排序
+	// start := time.Now() // 获取当前时间
+	// heapSort(tempSlice)
+	// fmt.Println("\r\n", time.Since(start))
 
 	// 归并排序
 	// start_1 := time.Now() // 获取当前时间
@@ -19,7 +24,21 @@ func Test() {
 
 	start_2 := time.Now() // 获取当前时间
 	pointerSplitMergeSort(tempSlice1, 0, len(tempSlice1))
-	fmt.Println("优化后/n", time.Since(start_2))
+	fmt.Println("堆排序优化后\r\n", time.Since(start_2))
+}
+
+func shellSort(slice_arg []int) {
+	StepLength := len(slice_arg) / 2
+	for gap := StepLength; gap >= 1; gap = gap / 2 {
+
+		for rightIndex := gap; rightIndex < len(slice_arg); rightIndex++ {
+			for leftIndex := rightIndex - gap; leftIndex >= 0; leftIndex = leftIndex - gap {
+				if slice_arg[leftIndex] > slice_arg[leftIndex+gap] {
+					slice_arg[leftIndex], slice_arg[leftIndex+gap] = slice_arg[leftIndex+gap], slice_arg[leftIndex]
+				}
+			}
+		}
+	}
 }
 
 /**
