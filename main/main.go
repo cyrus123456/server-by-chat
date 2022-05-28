@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
@@ -114,7 +115,7 @@ type JwtTokenResponseClaimsStruct struct {
 	jwt.StandardClaims
 }
 
-var Coons = make(map[string]*websocket.Conn)
+var clientConnection sync.Map
 
 func main() {
 	// 练习
@@ -155,18 +156,18 @@ func socketHandler(res http.ResponseWriter, req *http.Request) {
 			log.Println("聊天消息反序列化失败\n\r")
 		}
 		log.Println("服务端收到的砝反序列化消息", chatMessageContent, "\n\r")
-		_, ok := Coons[chatMessageContent.Sender]
+		_, ok := clientConnection.Load(chatMessageContent.Sender)
 		if !ok {
-			delete(Coons, chatMessageContent.Sender)
-			Coons[chatMessageContent.Sender] = conn
+			clientConnection.Delete(chatMessageContent.Sender)
+			clientConnection.Store(chatMessageContent.Sender, conn)
 		}
 		defer func() {
 			log.Println("用户下线", chatMessageContent.Sender, "\n\r")
 		}()
 		for _, v := range chatMessageContent.MessageRecipientId {
-			clenit, ok := Coons[v]
+			clientConn, ok := clientConnection.Load(v)
 			if ok {
-				err = clenit.WriteMessage(
+				err = clientConn.(*websocket.Conn).WriteMessage(
 					messageType,
 					[]byte(chatMessageContent.Sender+"发给"+v+"消息了：\n\r"+chatMessageContent.MessageTextContent),
 				)
