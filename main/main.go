@@ -39,28 +39,28 @@ type usersChatroomStruct struct {
 }
 
 var usersChatroomDb = map[string][]usersChatroomStruct{ //用户聊天室列表数据库
-	"123": []usersChatroomStruct{
-		usersChatroomStruct{
+	"123": {
+		{
 			Title:  "123_456_789",
 			Sender: true,
 		},
-		usersChatroomStruct{
+		{
 			Title:  "123_456",
 			Sender: false,
 		},
 	},
-	"456": []usersChatroomStruct{
-		usersChatroomStruct{
+	"456": {
+		{
 			Title:  "123_456_789",
 			Sender: true,
 		},
-		usersChatroomStruct{
+		{
 			Title:  "123_456",
 			Sender: false,
 		},
 	},
-	"789": []usersChatroomStruct{
-		usersChatroomStruct{
+	"789": {
+		{
 			Title:  "123_456_789",
 			Sender: true,
 		},
@@ -77,8 +77,8 @@ type ChatMessageContent struct {
 
 var timeNowFormat = time.Now().Format("2006-01-02 15:04:05") //当前时间
 var chatroomDb = map[string][]ChatMessageContent{            //聊天室列表数据库
-	"123_456_789": []ChatMessageContent{
-		ChatMessageContent{
+	"123_456_789": {
+		{
 			TimeStamp:          timeNowFormat,
 			Sender:             "123",
 			MessageRecipientId: make([]string, 0),
@@ -86,15 +86,15 @@ var chatroomDb = map[string][]ChatMessageContent{            //聊天室列表�
 			MessageTextContent: "大家好",
 		},
 	},
-	"123_456": []ChatMessageContent{
-		ChatMessageContent{
+	"123_456": {
+		{
 			TimeStamp:          timeNowFormat,
 			Sender:             "123",
 			MessageRecipientId: make([]string, 0),
 			ChatRoomId:         "123_456",
 			MessageTextContent: "你好",
 		},
-		ChatMessageContent{
+		{
 			TimeStamp:          timeNowFormat,
 			Sender:             "456",
 			MessageRecipientId: make([]string, 0),
@@ -112,10 +112,12 @@ type LoginRequestStrust struct {
 //token转化结构体
 type JwtTokenResponseClaimsStruct struct {
 	UserID string
-	jwt.StandardClaims
+	jwt.RegisteredClaims
 }
 
 var clientConnection sync.Map
+
+var expirationTime = time.Now().Add(5 * time.Minute)
 
 func main() {
 	// 练习
@@ -240,11 +242,12 @@ func loginRouter(res http.ResponseWriter, req *http.Request) {
 	}
 	log.Println("密码正确\n\r")
 
-	expirationTime := time.Now().Add(5 * time.Minute)
 	jwtTokenResponseClaimsStruct := &JwtTokenResponseClaimsStruct{
 		UserID: loginRequestStrust.UserID,
-		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: expirationTime.Unix(),
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(expirationTime), // 过期时间5分钟
+			IssuedAt:  jwt.NewNumericDate(time.Now()),     // 签发时间
+			NotBefore: jwt.NewNumericDate(time.Now()),     // 生效时间
 		},
 	}
 
@@ -283,9 +286,13 @@ func refreshRouter(res http.ResponseWriter, req *http.Request) {
 	}
 	log.Println("成功获取cookie\n\r", httpCookie.Value)
 	jwtTokenResponseClaimsStruct := &JwtTokenResponseClaimsStruct{}
-	okToken, err := jwt.ParseWithClaims(httpCookie.Value, jwtTokenResponseClaimsStruct, func(token *jwt.Token) (interface{}, error) {
-		return jwtKey, nil
-	})
+	okToken, err := jwt.ParseWithClaims(
+		httpCookie.Value,
+		jwtTokenResponseClaimsStruct,
+		func(token *jwt.Token) (interface{}, error) {
+			return jwtKey, nil
+		},
+	)
 	log.Println("验证token\n\r", okToken)
 	if err != nil {
 		if err == jwt.ErrSignatureInvalid {
@@ -300,15 +307,16 @@ func refreshRouter(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if time.Unix(jwtTokenResponseClaimsStruct.ExpiresAt, 0).Sub(time.Now()) > 30*time.Second {
+	if time.Until(jwtTokenResponseClaimsStruct.RegisteredClaims.ExpiresAt.Local()) > 30*time.Second {
 		res.WriteHeader(http.StatusBadRequest)
 		log.Println("jwtToken到期还有很长时间\n\r")
 		return
 	}
+
 	log.Println("开始颁发新的jwttoken\n\r")
 	expirationTime := time.Now().Add(5 * time.Minute)
 	log.Println("逾期时间对象\n\r", expirationTime)
-	jwtTokenResponseClaimsStruct.StandardClaims.ExpiresAt = expirationTime.Unix()
+	jwtTokenResponseClaimsStruct.RegisteredClaims.ExpiresAt = jwt.NewNumericDate(expirationTime)
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwtTokenResponseClaimsStruct)
 	tokenString, err := token.SignedString(jwtKey)
 	if err != nil {
