@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	practiceInterview "server-by-chat/practiceInterview"
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
@@ -119,9 +118,9 @@ var Coons = make(map[string]*websocket.Conn)
 
 func main() {
 	// 练习
-	practiceInterview.Test()
+	// practiceInterview.Test()
 
-	fmt.Println("端口9876\n\r")
+	log.Println("端口9876\n\r")
 
 	http.HandleFunc("/socket", socketHandler)
 
@@ -140,28 +139,41 @@ func socketHandler(res http.ResponseWriter, req *http.Request) {
 		log.Print("Error during connection upgradation:\n\r", err)
 		return
 	}
-	defer conn.Close()
+	defer func() {
+		conn.Close()
+		log.Println("wesocket链接关闭\n\r")
+	}()
 	for {
 		messageType, message, err := conn.ReadMessage()
 		if err != nil {
-			log.Println("Error during message reading:\n\r", err)
+			log.Println("读取消息失败:\n\r", err)
 			break
 		}
 		var chatMessageContent ChatMessageContent
 		err = json.Unmarshal(message, &chatMessageContent)
 		if err != nil {
-			fmt.Println("聊天消息反序列化失败\n\r")
+			log.Println("聊天消息反序列化失败\n\r")
 		}
-		fmt.Println("服务端收到的砝反序列化消息", chatMessageContent, "\n\r")
-		Coons[chatMessageContent.Sender] = conn
+		log.Println("服务端收到的砝反序列化消息", chatMessageContent, "\n\r")
+		_, ok := Coons[chatMessageContent.Sender]
+		if !ok {
+			delete(Coons, chatMessageContent.Sender)
+			Coons[chatMessageContent.Sender] = conn
+		}
+		defer func() {
+			log.Println("用户下线", chatMessageContent.Sender, "\n\r")
+		}()
 		for _, v := range chatMessageContent.MessageRecipientId {
-			err = Coons[v].WriteMessage(
-				messageType,
-				[]byte(chatMessageContent.Sender+"发给"+v+"消息了：\n\r"+chatMessageContent.MessageTextContent),
-			)
-			if err != nil {
-				log.Println("Error during message writing:\n\r", err)
-				// break
+			clenit, ok := Coons[v]
+			if ok {
+				err = clenit.WriteMessage(
+					messageType,
+					[]byte(chatMessageContent.Sender+"发给"+v+"消息了：\n\r"+chatMessageContent.MessageTextContent),
+				)
+				if err != nil {
+					log.Println("发送消息失败:\n\r", err)
+					// break
+				}
 			}
 		}
 	}
@@ -174,11 +186,11 @@ func refreshChatListRouter(res http.ResponseWriter, req *http.Request) {
 	}
 	uidStruct := UidStruct{}
 	if err := json.NewDecoder(req.Body).Decode(&uidStruct); err != nil {
-		fmt.Println("初始化聊天信息接口入参对象结构解析失败\n\r", err)
+		log.Println("初始化聊天信息接口入参对象结构解析失败\n\r", err)
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	fmt.Println("初始化聊天信息接口入参对象\r\n", uidStruct.Uid)
+	log.Println("初始化聊天信息接口入参对象\r\n", uidStruct.Uid)
 
 	type ResStruct struct {
 		UsersChatroomDb []usersChatroomStruct
@@ -197,35 +209,35 @@ func refreshChatListRouter(res http.ResponseWriter, req *http.Request) {
 }
 
 func registerRouter(res http.ResponseWriter, req *http.Request) {
-	fmt.Println("注册--原生HTTP路由")
+	log.Println("注册--原生HTTP路由")
 }
 
 func loginRouter(res http.ResponseWriter, req *http.Request) {
-	fmt.Println("登陆接口\n\r")
+	log.Println("登陆接口\n\r")
 
 	// 响应解码
 	var loginRequestStrust LoginRequestStrust
 	if err := json.NewDecoder(req.Body).Decode(&loginRequestStrust); err != nil {
-		fmt.Println("登陆接口入参对象结构解析失败\n\r", err)
+		log.Println("登陆接口入参对象结构解析失败\n\r", err)
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	fmt.Printf("登陆接口入参对象结构%v\n", loginRequestStrust)
+	log.Printf("登陆接口入参对象结构%v\n", loginRequestStrust)
 
 	// 获取密码
 	expectedPassword, ok := usersDb[loginRequestStrust.UserID]
 	if !ok {
-		fmt.Println("没有此用户\n\r")
+		log.Println("没有此用户\n\r")
 		res.WriteHeader(http.StatusUnauthorized)
 		return
 	}
 	if loginRequestStrust.UserPwd != expectedPassword {
-		fmt.Println("密码不正确\n\r")
+		log.Println("密码不正确\n\r")
 		res.WriteHeader(http.StatusUnauthorized)
 		return
 	}
-	fmt.Println("密码正确\n\r")
+	log.Println("密码正确\n\r")
 
 	expirationTime := time.Now().Add(5 * time.Minute)
 	jwtTokenResponseClaimsStruct := &JwtTokenResponseClaimsStruct{
@@ -238,11 +250,11 @@ func loginRouter(res http.ResponseWriter, req *http.Request) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwtTokenResponseClaimsStruct)
 	tokenString, err := token.SignedString(jwtKey)
 	if err != nil {
-		fmt.Println("token创建出错\n\r", err)
+		log.Println("token创建出错\n\r", err)
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	fmt.Println("token创建成功\n\r", tokenString)
+	log.Println("token创建成功\n\r", tokenString)
 	http.SetCookie(res, &http.Cookie{
 		Name:  "reactToken",
 		Value: tokenString,
@@ -256,24 +268,24 @@ func loginRouter(res http.ResponseWriter, req *http.Request) {
 }
 
 func refreshRouter(res http.ResponseWriter, req *http.Request) {
-	fmt.Println(" 刷新token\n\r")
+	log.Println(" 刷新token\n\r")
 	httpCookie, err := req.Cookie("reactToken")
 	if err != nil {
 		if err == http.ErrNoCookie {
-			fmt.Println("未设置cookie\n\r")
+			log.Println("未设置cookie\n\r")
 			res.WriteHeader(http.StatusUnauthorized)
 			return
 		}
-		fmt.Println("请求错误\n\r")
+		log.Println("请求错误\n\r")
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	fmt.Println("成功获取cookie\n\r", httpCookie.Value)
+	log.Println("成功获取cookie\n\r", httpCookie.Value)
 	jwtTokenResponseClaimsStruct := &JwtTokenResponseClaimsStruct{}
 	okToken, err := jwt.ParseWithClaims(httpCookie.Value, jwtTokenResponseClaimsStruct, func(token *jwt.Token) (interface{}, error) {
 		return jwtKey, nil
 	})
-	fmt.Println("验证token\n\r", okToken)
+	log.Println("验证token\n\r", okToken)
 	if err != nil {
 		if err == jwt.ErrSignatureInvalid {
 			res.WriteHeader(http.StatusUnauthorized)
@@ -289,21 +301,21 @@ func refreshRouter(res http.ResponseWriter, req *http.Request) {
 
 	if time.Unix(jwtTokenResponseClaimsStruct.ExpiresAt, 0).Sub(time.Now()) > 30*time.Second {
 		res.WriteHeader(http.StatusBadRequest)
-		fmt.Println("jwtToken到期还有很长时间\n\r")
+		log.Println("jwtToken到期还有很长时间\n\r")
 		return
 	}
-	fmt.Println("开始颁发新的jwttoken\n\r")
+	log.Println("开始颁发新的jwttoken\n\r")
 	expirationTime := time.Now().Add(5 * time.Minute)
-	fmt.Println("逾期时间对象\n\r", expirationTime)
+	log.Println("逾期时间对象\n\r", expirationTime)
 	jwtTokenResponseClaimsStruct.StandardClaims.ExpiresAt = expirationTime.Unix()
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwtTokenResponseClaimsStruct)
 	tokenString, err := token.SignedString(jwtKey)
 	if err != nil {
-		fmt.Println("token创建出错\n\r", err)
+		log.Println("token创建出错\n\r", err)
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	fmt.Println("token创建成功\n\r", tokenString)
+	log.Println("token创建成功\n\r", tokenString)
 	http.SetCookie(res, &http.Cookie{
 		Name:  "reactToken",
 		Value: tokenString,
@@ -317,16 +329,16 @@ func refreshRouter(res http.ResponseWriter, req *http.Request) {
 }
 
 func chatMessageRouter(res http.ResponseWriter, req *http.Request) {
-	fmt.Println(" 聊天消息--原生HTTP路由升级webSocket\n\r")
+	log.Println(" 聊天消息--原生HTTP路由升级webSocket\n\r")
 }
 
 func tokenVerifyRouter(res http.ResponseWriter, req *http.Request) {
-	fmt.Println(" token验证\n\r")
+	log.Println(" token验证\n\r")
 	httpCookie, err := req.Cookie("reactToken")
 	if err != nil {
 		if err == http.ErrNoCookie {
 			// 如果未设置cookie，则返回未授权状态
-			fmt.Println("未设置Cookie\n\r")
+			log.Println("未设置Cookie\n\r")
 			res.WriteHeader(http.StatusUnauthorized)
 			return
 		}
@@ -334,12 +346,12 @@ func tokenVerifyRouter(res http.ResponseWriter, req *http.Request) {
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	fmt.Println("成功获取token\n\r", httpCookie.Value)
+	log.Println("成功获取token\n\r", httpCookie.Value)
 	jwtTokenResponseClaimsStruct := &JwtTokenResponseClaimsStruct{}
 	okToken, err := jwt.ParseWithClaims(httpCookie.Value, jwtTokenResponseClaimsStruct, func(token *jwt.Token) (interface{}, error) {
 		return jwtKey, nil
 	})
-	fmt.Println("验证token\n\r", okToken)
+	log.Println("验证token\n\r", okToken)
 	if err != nil {
 		if err == jwt.ErrSignatureInvalid {
 			res.WriteHeader(http.StatusUnauthorized)
