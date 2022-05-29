@@ -6,22 +6,22 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"sync"
+	"server-by-chat/routes"
+	typestructinterface "server-by-chat/typeStructInterface"
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
-	"github.com/gorilla/websocket"
 )
 
-var upgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
+// var upgrader = websocket.Upgrader{
+// 	ReadBufferSize:  1024,
+// 	WriteBufferSize: 1024,
 
-	// 可以用来检查连接的来源
-	// 这将允许从我们的 React 服务向这里发出请求。
-	// 现在，我们可以不需要检查并运行任何连接
-	CheckOrigin: func(r *http.Request) bool { return true },
-}
+// 	// 可以用来检查连接的来源
+// 	// 这将允许从我们的 React 服务向这里发出请求。
+// 	// 现在，我们可以不需要检查并运行任何连接
+// 	CheckOrigin: func(r *http.Request) bool { return true },
+// }
 
 // 创建一个jwt使用的密钥
 var jwtKey = []byte("my_react_token_key")
@@ -67,16 +67,16 @@ var usersChatroomDb = map[string][]usersChatroomStruct{ //用户聊天室列表�
 	},
 }
 
-type ChatMessageContent struct {
-	TimeStamp          string   `json:"timeStamp,omitempty"`
-	Sender             string   `json:"sender,omitempty"`
-	MessageRecipientId []string `json:"messageRecipientId,omitempty"`
-	ChatRoomId         string   `json:"chatRoomId,omitempty"`
-	MessageTextContent string   `json:"messageTextContent,omitempty"`
-}
+// type ChatMessageContent struct {
+// 	TimeStamp          string   `json:"timeStamp,omitempty"`
+// 	Sender             string   `json:"sender,omitempty"`
+// 	MessageRecipientId []string `json:"messageRecipientId,omitempty"`
+// 	ChatRoomId         string   `json:"chatRoomId,omitempty"`
+// 	MessageTextContent string   `json:"messageTextContent,omitempty"`
+// }
 
-var timeNowFormat = time.Now().Format("2006-01-02 15:04:05") //当前时间
-var chatroomDb = map[string][]ChatMessageContent{            //聊天室列表数据库
+var timeNowFormat = time.Now().Format("2006-01-02 15:04:05")          //当前时间
+var chatroomDb = map[string][]typestructinterface.ChatMessageContent{ //聊天室列表数据库
 	"123_456_789": {
 		{
 			TimeStamp:          timeNowFormat,
@@ -115,17 +115,15 @@ type JwtTokenResponseClaimsStruct struct {
 	jwt.RegisteredClaims
 }
 
-var clientConnection sync.Map
+// var clientConnection sync.Map
 
 var expirationTime = time.Now().Add(5 * time.Minute)
 
 func main() {
-	// 练习
-	// practiceInterview.Test()
 
 	log.Println("端口9876\n\r")
 
-	http.HandleFunc("/socket", socketHandler)
+	http.HandleFunc("/socket", routes.SocketHandler)
 
 	http.HandleFunc("/refreshChatList", refreshChatListRouter)
 	http.HandleFunc("/register", registerRouter)
@@ -136,51 +134,51 @@ func main() {
 	http.ListenAndServe(":9876", nil)
 }
 
-func socketHandler(res http.ResponseWriter, req *http.Request) {
-	conn, err := upgrader.Upgrade(res, req, nil)
-	if err != nil {
-		log.Print("Error during connection upgradation:\n\r", err)
-		return
-	}
-	defer func() {
-		conn.Close()
-		log.Println("wesocket链接关闭\n\r")
-	}()
-	for {
-		messageType, message, err := conn.ReadMessage()
-		if err != nil {
-			log.Println("读取消息失败:\n\r", err)
-			break
-		}
-		var chatMessageContent ChatMessageContent
-		err = json.Unmarshal(message, &chatMessageContent)
-		if err != nil {
-			log.Println("聊天消息反序列化失败\n\r")
-		}
-		log.Println("服务端收到的砝反序列化消息", chatMessageContent, "\n\r")
-		_, ok := clientConnection.Load(chatMessageContent.Sender)
-		if !ok {
-			clientConnection.Delete(chatMessageContent.Sender)
-			clientConnection.Store(chatMessageContent.Sender, conn)
-		}
-		defer func() {
-			log.Println("用户下线", chatMessageContent.Sender, "\n\r")
-		}()
-		for _, v := range chatMessageContent.MessageRecipientId {
-			clientConn, ok := clientConnection.Load(v)
-			if ok {
-				err = clientConn.(*websocket.Conn).WriteMessage(
-					messageType,
-					[]byte(chatMessageContent.Sender+"发给"+v+"消息了：\n\r"+chatMessageContent.MessageTextContent),
-				)
-				if err != nil {
-					log.Println("发送消息失败:\n\r", err)
-					// break
-				}
-			}
-		}
-	}
-}
+// func socketHandler(res http.ResponseWriter, req *http.Request) {
+// 	conn, err := upgrader.Upgrade(res, req, nil)
+// 	if err != nil {
+// 		log.Print("Error during connection upgradation:\n\r", err)
+// 		return
+// 	}
+// 	defer func() {
+// 		conn.Close()
+// 		log.Println("wesocket链接关闭\n\r")
+// 	}()
+// 	for {
+// 		messageType, message, err := conn.ReadMessage()
+// 		if err != nil {
+// 			log.Println("读取消息失败:\n\r", err)
+// 			break
+// 		}
+// 		var chatMessageContent ChatMessageContent
+// 		err = json.Unmarshal(message, &chatMessageContent)
+// 		if err != nil {
+// 			log.Println("聊天消息反序列化失败\n\r")
+// 		}
+// 		log.Println("服务端收到的砝反序列化消息", chatMessageContent, "\n\r")
+// 		_, ok := clientConnection.Load(chatMessageContent.Sender)
+// 		if !ok {
+// 			clientConnection.Store(chatMessageContent.Sender, conn)
+// 		}
+// 		defer func() {
+// 			clientConnection.Delete(chatMessageContent.Sender)
+// 			log.Println("用户下线删除", chatMessageContent.Sender, "\n\r")
+// 		}()
+// 		for _, v := range chatMessageContent.MessageRecipientId {
+// 			clientConn, ok := clientConnection.Load(v)
+// 			if ok {
+// 				err = clientConn.(*websocket.Conn).WriteMessage(
+// 					messageType,
+// 					[]byte(chatMessageContent.Sender+"发给"+v+"消息了：\n\r"+chatMessageContent.MessageTextContent),
+// 				)
+// 				if err != nil {
+// 					log.Println("发送消息失败:\n\r", err)
+// 					// break
+// 				}
+// 			}
+// 		}
+// 	}
+// }
 
 func refreshChatListRouter(res http.ResponseWriter, req *http.Request) {
 
@@ -197,7 +195,7 @@ func refreshChatListRouter(res http.ResponseWriter, req *http.Request) {
 
 	type ResStruct struct {
 		UsersChatroomDb []usersChatroomStruct
-		ChatroomDb      map[string][]ChatMessageContent
+		ChatroomDb      map[string][]typestructinterface.ChatMessageContent
 	}
 	resStruct := ResStruct{
 		UsersChatroomDb: usersChatroomDb[uidStruct.Uid],
