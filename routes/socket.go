@@ -22,14 +22,6 @@ var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool { return true },
 }
 
-// type ChatMessageContent struct {
-// 	TimeStamp          string   `json:"timeStamp,omitempty"`
-// 	Sender             string   `json:"sender,omitempty"`
-// 	MessageRecipientId []string `json:"messageRecipientId,omitempty"`
-// 	ChatRoomId         string   `json:"chatRoomId,omitempty"`
-// 	MessageTextContent string   `json:"messageTextContent,omitempty"`
-// }
-
 func SocketHandler(res http.ResponseWriter, req *http.Request) {
 	conn, err := upgrader.Upgrade(res, req, nil)
 	if err != nil {
