@@ -29,6 +29,7 @@ func SocketHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 	defer func() {
+		// 异常关闭链接
 		conn.Close()
 		log.Println("wesocket链接关闭\n\r")
 	}()
@@ -47,15 +48,18 @@ func SocketHandler(res http.ResponseWriter, req *http.Request) {
 		log.Println("服务端收到的砝反序列化消息", chatMessageContent, "\n\r")
 		_, ok := clientConnection.Load(chatMessageContent.Sender)
 		if !ok {
+			// 避免重复保存用户链接
 			clientConnection.Store(chatMessageContent.Sender, conn)
 		}
 		defer func() {
+			// 链接断开删除用户
 			clientConnection.Delete(chatMessageContent.Sender)
 			log.Println("用户下线删除", chatMessageContent.Sender, "\n\r")
 		}()
 		for _, v := range chatMessageContent.MessageRecipientId {
 			clientConn, ok := clientConnection.Load(v)
 			if ok {
+				// 如果用户在线
 				err = clientConn.(*websocket.Conn).WriteMessage(
 					messageType,
 					[]byte(chatMessageContent.Sender+"发给"+v+"消息了：\n\r"+chatMessageContent.MessageTextContent),
@@ -64,6 +68,9 @@ func SocketHandler(res http.ResponseWriter, req *http.Request) {
 					log.Println("发送消息失败:\n\r", err)
 					// break
 				}
+			} else {
+				//如果用户不在线，漫游信息临时redis缓存，个个不同用户端上线后拉取信息
+
 			}
 		}
 	}
