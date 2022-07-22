@@ -10,12 +10,12 @@ import (
 )
 
 func TokenVerifyRouter(res http.ResponseWriter, req *http.Request) {
-	log.Println(" token验证\n\r")
+	log.Println(" token验证")
 	httpCookie, err := req.Cookie("reactToken")
 	if err != nil {
 		if err == http.ErrNoCookie {
 			// 如果未设置cookie，则返回未授权状态
-			log.Println("未设置Cookie\n\r")
+			log.Println("未设置Cookie")
 			res.WriteHeader(http.StatusUnauthorized)
 			return
 		}
@@ -23,12 +23,12 @@ func TokenVerifyRouter(res http.ResponseWriter, req *http.Request) {
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	log.Println("成功获取token\n\r", httpCookie.Value)
+	log.Println("成功获取token", httpCookie.Value)
 	jwtTokenResponseClaimsStruct := &typestructinterface.JwtTokenResponseClaimsStruct{}
 	okToken, err := jwt.ParseWithClaims(httpCookie.Value, jwtTokenResponseClaimsStruct, func(token *jwt.Token) (interface{}, error) {
 		return typestructinterface.JwtKey, nil
 	})
-	log.Println("验证token\n\r", okToken)
+	log.Println("验证token", okToken)
 	if err != nil {
 		if err == jwt.ErrSignatureInvalid {
 			res.WriteHeader(http.StatusUnauthorized)
@@ -43,5 +43,5 @@ func TokenVerifyRouter(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// 最后，将欢迎消息以及令牌中的用户名返回给用户
-	res.Write([]byte(fmt.Sprintf("Welcome %s!\n\r", jwtTokenResponseClaimsStruct.UserID)))
+	res.Write([]byte(fmt.Sprintf("Welcome %s!", jwtTokenResponseClaimsStruct.UserID)))
 }

@@ -19,6 +19,6 @@ func main() {
 	http.HandleFunc("/chatMessage", routes.ChatMessageRouter)
 	http.HandleFunc("/tokenVerify", routes.TokenVerifyRouter)
 	http.ListenAndServe(":9876", nil)
-	log.Println("端口9876\n\r")
+	log.Println("端口9876")
 
 }

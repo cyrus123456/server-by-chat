@@ -21,31 +21,31 @@ var usersDb = map[string]string{ //用户密码数据库
 }
 
 func LoginRouter(res http.ResponseWriter, req *http.Request) {
-	log.Println("登陆接口\n\r")
+	log.Println("登陆接口")
 
 	// 响应解码
 	var loginRequestStrust typestructinterface.LoginRequestStrust
 	if err := json.NewDecoder(req.Body).Decode(&loginRequestStrust); err != nil {
-		log.Println("登陆接口入参对象结构解析失败\n\r", err)
+		log.Println("登陆接口入参对象结构解析失败👺", err)
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	log.Printf("登陆接口入参对象结构%v\n", loginRequestStrust)
+	log.Printf("登陆接口入参对象结构%v", loginRequestStrust)
 
 	// 获取密码
 	expectedPassword, ok := usersDb[loginRequestStrust.UserID]
 	if !ok {
-		log.Println("没有此用户\n\r")
+		log.Println("没有此用户")
 		res.WriteHeader(http.StatusUnauthorized)
 		return
 	}
 	if loginRequestStrust.UserPwd != expectedPassword {
-		log.Println("密码不正确\n\r")
+		log.Println("密码不正确")
 		res.WriteHeader(http.StatusUnauthorized)
 		return
 	}
-	log.Println("密码正确\n\r")
+	log.Println("密码正确")
 
 	jwtTokenResponseClaimsStruct := &typestructinterface.JwtTokenResponseClaimsStruct{
 		UserID: loginRequestStrust.UserID,
@@ -59,11 +59,11 @@ func LoginRouter(res http.ResponseWriter, req *http.Request) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwtTokenResponseClaimsStruct)
 	tokenString, err := token.SignedString(typestructinterface.JwtKey)
 	if err != nil {
-		log.Println("token创建出错\n\r", err)
+		log.Println("token创建出错", err)
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	log.Println("token创建成功\n\r", tokenString)
+	log.Println("token创建成功", tokenString)
 	http.SetCookie(res, &http.Cookie{
 		Name:  "reactToken",
 		Value: tokenString,

@@ -25,27 +25,27 @@ var upgrader = websocket.Upgrader{
 func SocketHandler(res http.ResponseWriter, req *http.Request) {
 	conn, err := upgrader.Upgrade(res, req, nil)
 	if err != nil {
-		log.Print("Error during connection upgradation:\n\r", err)
+		log.Print("Error during connection upgradation:", err)
 		return
 	}
 	defer func() {
 		// 异常关闭链接
 		conn.Close()
-		log.Println("wesocket链接关闭\n\r")
+		log.Println("wesocket链接关闭")
 	}()
 	for {
 		messageType, message, err := conn.ReadMessage()
 		if err != nil {
-			log.Println("读取消息失败:\n\r", err)
+			log.Println("读取消息失败👺:", err)
 			break
 		}
 
 		var chatMessageContent typestructinterface.ChatMessageContent
 		err = json.Unmarshal(message, &chatMessageContent)
 		if err != nil {
-			log.Println("聊天消息反序列化失败\n\r")
+			log.Println("聊天消息反序列化失败👺")
 		}
-		log.Println("服务端收到的砝反序列化消息", chatMessageContent, "\n\r")
+		log.Println("服务端收到的砝反序列化消息", chatMessageContent, "")
 		_, ok := clientConnection.Load(chatMessageContent.Sender)
 		if !ok {
 			// 避免重复保存用户链接
@@ -54,7 +54,7 @@ func SocketHandler(res http.ResponseWriter, req *http.Request) {
 		defer func() {
 			// 链接断开删除用户
 			clientConnection.Delete(chatMessageContent.Sender)
-			log.Println("用户下线删除", chatMessageContent.Sender, "\n\r")
+			log.Println("用户下线删除", chatMessageContent.Sender, "")
 		}()
 		for _, v := range chatMessageContent.MessageRecipientId {
 			clientConn, ok := clientConnection.Load(v)
@@ -62,10 +62,10 @@ func SocketHandler(res http.ResponseWriter, req *http.Request) {
 				// 如果用户在线
 				err = clientConn.(*websocket.Conn).WriteMessage(
 					messageType,
-					[]byte(chatMessageContent.Sender+"发给"+v+"消息了：\n\r"+chatMessageContent.MessageTextContent),
+					[]byte(chatMessageContent.Sender+"发给"+v+"消息了："+chatMessageContent.MessageTextContent),
 				)
 				if err != nil {
-					log.Println("发送消息失败:\n\r", err)
+					log.Println("发送消息失败👺:", err)
 					// break
 				}
 			} else {

@@ -74,11 +74,11 @@ func RefreshChatListRouter(res http.ResponseWriter, req *http.Request) {
 	}
 	uidStruct := UidStruct{}
 	if err := json.NewDecoder(req.Body).Decode(&uidStruct); err != nil {
-		log.Println("初始化聊天信息接口入参对象结构解析失败\n\r", err)
+		log.Println("初始化聊天信息接口入参对象结构解析失败👺", err)
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	log.Println("初始化聊天信息接口入参对象\r\n", uidStruct.Uid)
+	log.Println("初始化聊天信息接口入参对象", uidStruct.Uid)
 
 	type ResStruct struct {
 		UsersChatroomDb []typestructinterface.UsersChatroomStruct
